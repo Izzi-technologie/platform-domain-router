@@ -1,0 +1,13 @@
+# Local dev — mock resolve upstreams on host network or linked containers
+services:
+  platform-domain-router:
+    build: .
+    ports:
+      - "${PORT:-4280}:4280"
+    environment:
+      PORT: "4280"
+      SAAS_SERVICES: ${SAAS_SERVICES:?}
+      CACHE_TTL_MS: ${CACHE_TTL_MS:-60000}
+      NEGATIVE_CACHE_TTL_MS: ${NEGATIVE_CACHE_TTL_MS:-30000}
+      RESOLVE_TIMEOUT_MS: ${RESOLVE_TIMEOUT_MS:-2000}
+      PROXY_TIMEOUT_MS: ${PROXY_TIMEOUT_MS:-30000}
