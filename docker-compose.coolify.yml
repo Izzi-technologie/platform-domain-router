@@ -1,36 +1,30 @@
 # Coolify — global custom-domain catch-all (Traefik labels, Domains UI empty)
-# Connect this service to the shared Docker network with each SaaS stack.
-
-x-coolify-domain-env: &coolify-domain-env
-  TENANT_SITE_BASE_DOMAIN: ${TENANT_SITE_BASE_DOMAIN:-izzisite.com}
-  TENANT_SITE_BASE_DOMAIN_REGEX: ${TENANT_SITE_BASE_DOMAIN_REGEX:-izzisite\.com}
-  PLATFORM_ROOT_DOMAIN: ${PLATFORM_ROOT_DOMAIN:-izzi-finance.com}
-  PLATFORM_ROOT_DOMAIN_REGEX: ${PLATFORM_ROOT_DOMAIN_REGEX:-izzi-finance\.com}
+# Connect this service to the predefined Coolify network with each SaaS stack.
 
 services:
   platform-domain-router:
     image: ghcr.io/${GITHUB_ORG:-Izzi-technologie}/platform-domain-router:${IMAGE_TAG:-latest}
     restart: unless-stopped
-    ports:
-      - "${PLATFORM_DOMAIN_ROUTER_PORT:-4280}:4280"
+    # Internal only — never `ports:` (bypasses Traefik, blocks Coolify rolling updates).
+    expose:
+      - "4280"
     environment:
-      PORT: "4280"
       SAAS_SERVICES: ${SAAS_SERVICES:?}
       CACHE_TTL_MS: ${CACHE_TTL_MS:-60000}
       NEGATIVE_CACHE_TTL_MS: ${NEGATIVE_CACHE_TTL_MS:-30000}
       RESOLVE_TIMEOUT_MS: ${RESOLVE_TIMEOUT_MS:-2000}
       PROXY_TIMEOUT_MS: ${PROXY_TIMEOUT_MS:-30000}
-      <<: *coolify-domain-env
     labels:
       - traefik.enable=true
-      # Custom domains catch-all — priority 1 (below managed 10 / ops 20)
+      # Catch-all — priority 1 loses to managed 10 / ops 20
       - traefik.http.routers.pdr-custom-http.entryPoints=http
       - traefik.http.routers.pdr-custom-http.middlewares=redirect-to-https
-      - traefik.http.routers.pdr-custom-http.rule=HostRegexp(`^.+$`) && !HostRegexp(`^.+\.${TENANT_SITE_BASE_DOMAIN_REGEX:-izzisite\.com}$`) && !Host(`${TENANT_SITE_BASE_DOMAIN:-izzisite.com}`) && !HostRegexp(`^.+\.${PLATFORM_ROOT_DOMAIN_REGEX:-izzi-finance\.com}$`) && !Host(`${PLATFORM_ROOT_DOMAIN:-izzi-finance.com}`)
+      - traefik.http.routers.pdr-custom-http.rule=HostRegexp(`^.+$`)
       - traefik.http.routers.pdr-custom-http.priority=1
+      - traefik.http.routers.pdr-custom-http.service=pdr-svc
       - traefik.http.routers.pdr-custom-https.entryPoints=https
       - traefik.http.routers.pdr-custom-https.middlewares=gzip
-      - traefik.http.routers.pdr-custom-https.rule=HostRegexp(`^.+$`) && !HostRegexp(`^.+\.${TENANT_SITE_BASE_DOMAIN_REGEX:-izzisite\.com}$`) && !Host(`${TENANT_SITE_BASE_DOMAIN:-izzisite.com}`) && !HostRegexp(`^.+\.${PLATFORM_ROOT_DOMAIN_REGEX:-izzi-finance\.com}$`) && !Host(`${PLATFORM_ROOT_DOMAIN:-izzi-finance.com}`)
+      - traefik.http.routers.pdr-custom-https.rule=HostRegexp(`^.+$`)
       - traefik.http.routers.pdr-custom-https.priority=1
       - traefik.http.routers.pdr-custom-https.service=pdr-svc
       - traefik.http.routers.pdr-custom-https.tls=true

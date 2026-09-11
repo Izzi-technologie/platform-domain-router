@@ -1,5 +1,5 @@
 # Example Traefik labels for platform-domain-router (Coolify compose)
-# Copy into docker-compose.coolify.yml — interpolate env vars at deploy time.
+# Copy into docker-compose.coolify.yml if you need a reference.
 
 services:
   platform-domain-router:
@@ -9,24 +9,23 @@ services:
       # HTTP → HTTPS
       - traefik.http.routers.pdr-custom-http.entryPoints=http
       - traefik.http.routers.pdr-custom-http.middlewares=redirect-to-https
-      - traefik.http.routers.pdr-custom-http.rule=HostRegexp(`^.+$`) && !HostRegexp(`^.+\.izzisite\.com$`) && !Host(`izzisite.com`) && !HostRegexp(`^.+\.izzi-finance\.com$`) && !Host(`izzi-finance.com`)
+      - traefik.http.routers.pdr-custom-http.rule=HostRegexp(`^.+$`)
       - traefik.http.routers.pdr-custom-http.priority=1
+      - traefik.http.routers.pdr-custom-http.service=pdr-svc
 
       # HTTPS catch-all (custom domains)
       - traefik.http.routers.pdr-custom-https.entryPoints=https
       - traefik.http.routers.pdr-custom-https.middlewares=gzip
-      - traefik.http.routers.pdr-custom-https.rule=HostRegexp(`^.+$`) && !HostRegexp(`^.+\.izzisite\.com$`) && !Host(`izzisite.com`) && !HostRegexp(`^.+\.izzi-finance\.com$`) && !Host(`izzi-finance.com`)
+      - traefik.http.routers.pdr-custom-https.rule=HostRegexp(`^.+$`)
       - traefik.http.routers.pdr-custom-https.priority=1
       - traefik.http.routers.pdr-custom-https.service=pdr-svc
       - traefik.http.routers.pdr-custom-https.tls=true
 
       - traefik.http.services.pdr-svc.loadbalancer.server.port=4280
 
-# Compare with SaaS edge-router managed router (priority 10):
+# Traefik picks the highest matching priority — no host exclusions needed:
 #
 #   traefik.http.routers.edge-managed-https.rule=HostRegexp(`^[a-z0-9-]+\.izzisite\.com$`)
 #   traefik.http.routers.edge-managed-https.priority=10
-#
-# And ops portals (priority 20):
 #
 #   traefik.http.routers.merchant-https.priority=20

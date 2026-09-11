@@ -3,9 +3,8 @@ services:
   platform-domain-router:
     build: .
     ports:
-      - "${PORT:-4280}:4280"
+      - "4280:4280"
     environment:
-      PORT: "4280"
       SAAS_SERVICES: ${SAAS_SERVICES:?}
       CACHE_TTL_MS: ${CACHE_TTL_MS:-60000}
       NEGATIVE_CACHE_TTL_MS: ${NEGATIVE_CACHE_TTL_MS:-30000}

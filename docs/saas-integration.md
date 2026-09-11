@@ -4,12 +4,12 @@ Each SaaS on a shared Coolify VPS participates in custom-domain routing via **pl
 
 ## Required components
 
-| Component | Responsibility |
-| --- | --- |
-| `platform-api` (or equivalent) | `GET /api/v1/public/sites/resolve-host?host=` |
-| `edge-router` | Tenant portal proxy after resolve |
-| `white_label_domains` table | Source of truth for custom hostnames |
-| Docker service names | **Unique** on shared network (`platform-api` vs `saas2-platform-api`) |
+| Component                      | Responsibility                                                        |
+| ------------------------------ | --------------------------------------------------------------------- |
+| `platform-api` (or equivalent) | `GET /api/v1/public/sites/resolve-host?host=`                         |
+| `edge-router`                  | Tenant portal proxy after resolve                                     |
+| `white_label_domains` table    | Source of truth for custom hostnames                                  |
+| Docker service names           | **Unique** on shared network (`platform-api` vs `saas2-platform-api`) |
 
 ## `resolve-host` contract
 
@@ -17,10 +17,10 @@ Each SaaS on a shared Coolify VPS participates in custom-domain routing via **pl
 GET /api/v1/public/sites/resolve-host?host=<hostname>
 ```
 
-| Status | Meaning |
-| --- | --- |
+| Status  | Meaning                                                               |
+| ------- | --------------------------------------------------------------------- |
 | **200** | SaaS owns this ACTIVE hostname — body includes tenant/portal/upstream |
-| **404** | Not owned or not ACTIVE — try next SaaS in federation |
+| **404** | Not owned or not ACTIVE — try next SaaS in federation                 |
 
 Only **ACTIVE** domains resolve. VERIFIED-but-not-active must return 404.
 
@@ -61,7 +61,6 @@ Your edge-router continues to resolve tenant context (may double-resolve; edge c
 - [ ] `resolve-host` returns 200/404 per contract
 - [ ] edge-router handles managed zone (priority 10) for `{slug}.your-zone`
 - [ ] Entry added to platform-domain-router `SAAS_SERVICES`
-- [ ] Managed zone excluded in PDR Traefik rule if different from IZZIPAY
 - [ ] Smoke test custom domain end-to-end
 
 ## Reference implementation
