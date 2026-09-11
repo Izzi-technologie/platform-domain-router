@@ -3,7 +3,7 @@
 
 services:
   platform-domain-router:
-    image: ghcr.io/${GITHUB_ORG:-Izzi-technologie}/platform-domain-router:${IMAGE_TAG:-latest}
+    build: .
     restart: unless-stopped
     # Internal only — never `ports:` (bypasses Traefik, blocks Coolify rolling updates).
     expose:

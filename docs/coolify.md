@@ -18,11 +18,10 @@ Deploy **one** `platform-domain-router` instance per Coolify server (or per shar
 Production example (IZZIPAY only):
 
 ```bash
-IMAGE_TAG=latest
-GITHUB_ORG=Izzi-technologie
-
 SAAS_SERVICES=[{"id":"izzipay","resolveUrl":"http://platform-api:4215/api/v1/public/sites/resolve-host","upstreamUrl":"http://edge-router:4270","priority":10,"enabled":true}]
 ```
+
+Coolify clones the repo and builds `Dockerfile` — no GHCR pull.
 
 ## Deployment order
 

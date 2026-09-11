@@ -88,7 +88,7 @@ docker run --rm -p 4280:4280 \
   platform-domain-router
 ```
 
-Production image: `ghcr.io/<org>/platform-domain-router:latest`
+Coolify builds this Dockerfile from the cloned repo (`docker-compose.coolify.yml`).
 
 ## Coolify
 
