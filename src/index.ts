@@ -4,7 +4,8 @@ import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 
 import { loadConfig, type AppConfig } from "./config.js";
-import { ResolveCache, normalizeHostKey } from "./cache.js";
+import { ResolveCache } from "./cache.js";
+import { resolveRequestHost } from "./host.js";
 import { healthPayload, readyPayload } from "./health.js";
 import { createMetrics, snapshotMetrics } from "./metrics.js";
 import { proxyToUpstream } from "./proxy.js";
@@ -38,8 +39,7 @@ export function createApp(config: AppConfig) {
   );
 
   app.all("*", async (c) => {
-    const hostHeader = c.req.header("host");
-    const host = normalizeHostKey(hostHeader ?? "");
+    const host = resolveRequestHost(c.req.raw.headers);
 
     if (!host) {
       return c.text("Bad Request", 400);

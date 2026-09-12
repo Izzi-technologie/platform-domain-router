@@ -1,3 +1,5 @@
+import { normalizeHostKey } from "./host.js";
+
 export type ResolveWinner = {
   saasId: string;
   upstreamUrl: string;
@@ -79,8 +81,4 @@ export class ResolveCache {
   clear(): void {
     this.entries.clear();
   }
-}
-
-export function normalizeHostKey(host: string): string {
-  return host.trim().toLowerCase().split(":")[0] ?? "";
 }

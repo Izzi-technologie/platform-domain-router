@@ -16,6 +16,7 @@ services:
       PROXY_TIMEOUT_MS: ${PROXY_TIMEOUT_MS:-30000}
     labels:
       - traefik.enable=true
+      # Coolify: leave Domains UI empty for this service — routing is label-only below.
       # Catch-all — priority 1 loses to managed 10 / ops 20
       - traefik.http.routers.pdr-custom-http.entryPoints=http
       - traefik.http.routers.pdr-custom-http.middlewares=redirect-to-https
@@ -28,6 +29,9 @@ services:
       - traefik.http.routers.pdr-custom-https.priority=1
       - traefik.http.routers.pdr-custom-https.service=pdr-svc
       - traefik.http.routers.pdr-custom-https.tls=true
+      - traefik.http.routers.pdr-custom-https.tls.certresolver=letsencrypt
+      # Preserve client Host through Traefik → PDR (Coolify merges may override defaults)
+      - traefik.http.services.pdr-svc.loadbalancer.passhostheader=true
       - traefik.http.services.pdr-svc.loadbalancer.server.port=4280
     healthcheck:
       test:

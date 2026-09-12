@@ -20,7 +20,9 @@ services:
       - traefik.http.routers.pdr-custom-https.priority=1
       - traefik.http.routers.pdr-custom-https.service=pdr-svc
       - traefik.http.routers.pdr-custom-https.tls=true
+      - traefik.http.routers.pdr-custom-https.tls.certresolver=letsencrypt
 
+      - traefik.http.services.pdr-svc.loadbalancer.passhostheader=true
       - traefik.http.services.pdr-svc.loadbalancer.server.port=4280
 
 # Traefik picks the highest matching priority — no host exclusions needed:

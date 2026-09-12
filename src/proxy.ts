@@ -1,7 +1,10 @@
+import { request as httpRequest } from "node:http";
+import { Readable } from "node:stream";
+
 import type { Context } from "hono";
-import { proxy } from "hono/proxy";
 
 import type { ResolveWinner } from "./cache.js";
+import { resolveRequestHost } from "./host.js";
 
 const HOP_BY_HOP = new Set([
   "connection",
@@ -21,21 +24,27 @@ export function buildUpstreamTarget(upstreamBase: string, requestUrl: string): s
   return target.toString();
 }
 
-export function forwardHeaders(c: Context, winner: ResolveWinner): Headers {
-  const headers = new Headers();
+export function forwardHeaders(
+  c: Context,
+  winner: ResolveWinner,
+  clientHost: string,
+): Record<string, string> {
+  const headers: Record<string, string> = {};
+
   c.req.raw.headers.forEach((value, key) => {
-    if (HOP_BY_HOP.has(key.toLowerCase())) return;
-    headers.set(key, value);
+    const lower = key.toLowerCase();
+    if (HOP_BY_HOP.has(lower) || lower === "host") return;
+    headers[key] = value;
   });
 
-  const host = c.req.header("host");
-  if (host) {
-    headers.set("host", host);
-    headers.set("x-forwarded-host", host);
+  if (clientHost) {
+    // node:http allows Host; fetch forbids it and would send the upstream Docker name.
+    headers.host = clientHost;
+    headers["x-forwarded-host"] = clientHost;
   }
 
-  headers.set("x-forwarded-proto", "https");
-  headers.set("x-saas-id", winner.saasId);
+  headers["x-forwarded-proto"] = "https";
+  headers["x-saas-id"] = winner.saasId;
 
   return headers;
 }
@@ -45,11 +54,45 @@ export async function proxyToUpstream(
   winner: ResolveWinner,
   timeoutMs: number,
 ): Promise<Response> {
-  const target = buildUpstreamTarget(winner.upstreamUrl, c.req.url);
+  const clientHost = resolveRequestHost(c.req.raw.headers);
+  const target = new URL(buildUpstreamTarget(winner.upstreamUrl, c.req.url));
+  const headers = forwardHeaders(c, winner, clientHost);
+  const method = c.req.method;
+  const hasBody = method !== "GET" && method !== "HEAD";
 
-  return proxy(target, {
-    raw: c.req.raw,
-    headers: forwardHeaders(c, winner),
-    signal: AbortSignal.timeout(timeoutMs),
+  return new Promise((resolve, reject) => {
+    const req = httpRequest(
+      {
+        hostname: target.hostname,
+        port: target.port || 80,
+        path: `${target.pathname}${target.search}`,
+        method,
+        headers,
+        signal: AbortSignal.timeout(timeoutMs),
+      },
+      (res) => {
+        const responseHeaders = new Headers();
+        for (const [key, value] of Object.entries(res.headers)) {
+          if (value === undefined) continue;
+          responseHeaders.append(key, Array.isArray(value) ? value.join(", ") : value);
+        }
+
+        resolve(
+          new Response(Readable.toWeb(res) as ReadableStream, {
+            status: res.statusCode ?? 502,
+            headers: responseHeaders,
+          }),
+        );
+      },
+    );
+
+    req.on("error", reject);
+
+    if (hasBody && c.req.raw.body) {
+      Readable.fromWeb(c.req.raw.body as import("stream/web").ReadableStream).pipe(req);
+      return;
+    }
+
+    req.end();
   });
 }
