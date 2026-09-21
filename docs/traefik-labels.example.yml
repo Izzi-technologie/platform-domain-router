@@ -1,5 +1,8 @@
 # Example Traefik labels for platform-domain-router (Coolify compose)
 # Copy into docker-compose.coolify.yml if you need a reference.
+#
+# Coolify: leave Domains UI empty. Disable "Escape special characters in labels?"
+# so HostRegexp(`^.+$`) is not rewritten.
 
 services:
   platform-domain-router:

@@ -4,18 +4,20 @@ Each SaaS on a shared Coolify VPS participates in custom-domain routing via **pl
 
 ## Required components
 
-| Component                      | Responsibility                                                        |
-| ------------------------------ | --------------------------------------------------------------------- |
-| `platform-api` (or equivalent) | `GET /api/v1/public/sites/resolve-host?host=`                         |
-| `edge-router`                  | Tenant portal proxy after resolve                                     |
-| `white_label_domains` table    | Source of truth for custom hostnames                                  |
-| Docker service names           | **Unique** on shared network (`platform-api` vs `saas2-platform-api`) |
+| Component                      | Responsibility                                                                                          |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| Platform API (or equivalent)   | `GET resolveUrl?host=` returning **200** (owned + ACTIVE) or **404**                                    |
+| Edge / dashboard upstream      | Receives the original `Host` after PDR proxy                                                            |
+| Custom-domain table            | Source of truth for custom hostnames                                                                    |
+| Docker service names           | **Unique** on shared network (`platform-api` vs `school360-api`, `edge-router` vs `school360-dashboard`) |
 
 ## `resolve-host` contract
 
 ```
-GET /api/v1/public/sites/resolve-host?host=<hostname>
+GET <resolveUrl>?host=<hostname>
 ```
+
+The path is part of `resolveUrl` (IZZIPAY: `/api/v1/public/sites/resolve-host`, School360: `/api/v1/public/resolve-host`). PDR only inspects the HTTP status.
 
 | Status  | Meaning                                                               |
 | ------- | --------------------------------------------------------------------- |
@@ -28,9 +30,9 @@ Only **ACTIVE** domains resolve. VERIFIED-but-not-active must return 404.
 
 ```json
 {
-  "id": "your-saas",
-  "resolveUrl": "http://your-platform-api:4215/api/v1/public/sites/resolve-host",
-  "upstreamUrl": "http://your-edge-router:4270",
+  "id": "school360",
+  "resolveUrl": "http://school360-api:3001/api/v1/public/resolve-host",
+  "upstreamUrl": "http://school360-dashboard:3000",
   "priority": 10,
   "enabled": true
 }
@@ -42,8 +44,8 @@ Only **ACTIVE** domains resolve. VERIFIED-but-not-active must return 404.
 
 ## What NOT to deploy
 
-- **No** `edge-custom-*` Traefik labels on your commercial compose.
-- **No** duplicate catch-all on Coolify Domains UI.
+- **No** `edge-custom-*` Traefik labels or `HostRegexp(\`.+$\`)` on your commercial/dashboard compose.
+- **No** duplicate catch-all on Coolify Domains UI (do not check Coolify's catch-all domain box).
 - **No** external HTTPS `resolveUrl` (SSRF / latency).
 
 ## Headers preserved by platform-domain-router
@@ -70,3 +72,9 @@ IZZIPAY monorepo:
 - Resolve: `apps/core/platform-api/src/white-label/public-sites.controller.ts`
 - Edge: `apps/core/edge-router`
 - Docs: `docs/deployment/CUSTOM_DOMAINS.md`
+
+School360 monorepo:
+
+- Resolve: `GET /api/v1/public/resolve-host` (`packages/school-api/src/routes/public.ts`)
+- Upstream: Coolify service `school360-dashboard:3000`
+- Docs: `docs/architecture/CUSTOM_DOMAINS.md`

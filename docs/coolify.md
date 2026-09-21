@@ -4,31 +4,32 @@ Deploy **one** `platform-domain-router` instance per Coolify server (or per shar
 
 ## Resource setup
 
-| Field         | Value                                                                                                                    |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Name          | `platform-domain-router`                                                                                                 |
-| Source        | GitHub repo `platform-domain-router`                                                                                     |
-| Compose file  | `docker-compose.coolify.yml`                                                                                             |
-| Domains UI    | **Empty** for `platform-domain-router` (labels only — never add a domain here)                                           |
-| Ports Exposes | `4280` (compose `expose`, never host `ports:`)                                                                           |
-| Advanced      | Enable **Connect To Predefined Network** so this stack can reach other Coolify resources (`platform-api`, `edge-router`) |
+| Field                                | Value                                                                                                                              |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Name                                 | `platform-domain-router`                                                                                                           |
+| Source                               | GitHub repo `platform-domain-router`                                                                                               |
+| Compose file                         | `docker-compose.coolify.yml`                                                                                                       |
+| Domains UI                           | **Empty** for `platform-domain-router` (labels only — never add a domain here, never enable the Coolify catch-all checkbox)        |
+| Escape special characters in labels? | **OFF** (Traefik 3 `HostRegexp` backticks must stay unescaped)                                                                     |
+| Ports Exposes                        | `4280` (compose `expose`, never host `ports:`)                                                                                     |
+| Advanced                             | Enable **Connect To Predefined Network** so this stack can reach SaaS resources (`platform-api`, `edge-router`, `school360-api`, `school360-dashboard`) |
 
 ## Environment variables
 
-Production example (IZZIPAY only):
+Production example (IZZIPAY + School360 on the same VPS):
 
 ```bash
-SAAS_SERVICES=[{"id":"izzipay","resolveUrl":"http://platform-api:4215/api/v1/public/sites/resolve-host","upstreamUrl":"http://edge-router:4270","priority":10,"enabled":true}]
+SAAS_SERVICES=[{"id":"izzipay","resolveUrl":"http://platform-api:4215/api/v1/public/sites/resolve-host","upstreamUrl":"http://edge-router:4270","priority":10,"enabled":true},{"id":"school360","resolveUrl":"http://school360-api:3001/api/v1/public/resolve-host","upstreamUrl":"http://school360-dashboard:3000","priority":10,"enabled":true}]
 ```
 
 Coolify clones the repo and builds `Dockerfile` — no GHCR pull.
 
 ## Deployment order
 
-1. Deploy `platform-domain-router` with **Connect To Predefined Network** (catch-all active).
-2. Remove `edge-custom-*` labels from each SaaS commercial compose (IZZIPAY: `docker/web/docker-compose.coolify.commercial.yml`) and redeploy commercial.
+1. Deploy `platform-domain-router` with **Connect To Predefined Network**, **Escape labels OFF**, and Domains UI empty (catch-all labels in compose are already active).
+2. Remove `edge-custom-*` labels from each SaaS commercial compose (IZZIPAY: `docker/web/docker-compose.coolify.commercial.yml`) and redeploy commercial. School360 must not add a dashboard catch-all — tenant `HostRegexp` stays at priority 10.
 3. Smoke-test custom + managed domains (see IZZIPAY `scripts/deploy/smoke-platform-domain-router.sh`).
-4. Add additional SaaS entries to `SAAS_SERVICES` when a second product joins the VPS.
+4. Keep `SAAS_SERVICES` in sync when a SaaS joins or leaves the VPS.
 
 ## Traefik label verification
 
@@ -45,6 +46,8 @@ Expected:
 traefik.http.routers.pdr-custom-https.rule=HostRegexp(`^.+$`)
 traefik.http.routers.pdr-custom-https.priority=1
 ```
+
+**Broken (Escape labels ON):** the rule still contains escaped backticks or a literal `${…}` — toggle OFF and redeploy.
 
 A second SaaS only needs its own Traefik routers at priority **> 1** (managed 10 / ops 20) and an entry in `SAAS_SERVICES`.
 
@@ -77,6 +80,7 @@ docker logs <platform-domain-router-container> 2>&1 | tail
 | Custom domain 404                                   | `resolve-host` on each SaaS API; domain ACTIVE in DB                                                                   |
 | Managed slug hits PDR                               | Missing `edge-managed-*` priority 10 on SaaS edge-router                                                               |
 | TLS OK but wrong app                                | Two catch-alls — remove `edge-custom-*` from SaaS composes                                                             |
+| Catch-all 503 / rule not interpolating              | Escape labels still ON — toggle OFF and redeploy                                                                       |
 | Intermittent 504 / No Available Server              | Host `ports:` mapping, or a custom `networks:` block — Coolify Traefik must stay on the resource network               |
 
 ## Related

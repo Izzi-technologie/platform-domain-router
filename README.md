@@ -59,10 +59,10 @@ curl -s http://127.0.0.1:4280/health
     "enabled": true
   },
   {
-    "id": "saas2",
-    "resolveUrl": "http://saas2-platform-api:4215/api/v1/public/sites/resolve-host",
-    "upstreamUrl": "http://saas2-edge-router:4280",
-    "priority": 20,
+    "id": "school360",
+    "resolveUrl": "http://school360-api:3001/api/v1/public/resolve-host",
+    "upstreamUrl": "http://school360-dashboard:3000",
+    "priority": 10,
     "enabled": true
   }
 ]

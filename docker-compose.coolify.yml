@@ -1,5 +1,8 @@
 # Coolify — global custom-domain catch-all (Traefik labels, Domains UI empty)
 # Connect this service to the predefined Coolify network with each SaaS stack.
+#
+# Coolify: disable "Escape special characters in labels?" so HostRegexp backticks stay intact.
+# Domains UI for this service: leave empty — routing is 100% via labels below.
 
 services:
   platform-domain-router:
