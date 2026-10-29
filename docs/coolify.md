@@ -4,14 +4,14 @@ Deploy **one** `platform-domain-router` instance per Coolify server (or per shar
 
 ## Resource setup
 
-| Field                                | Value                                                                                                                              |
-| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
-| Name                                 | `platform-domain-router`                                                                                                           |
-| Source                               | GitHub repo `platform-domain-router`                                                                                               |
-| Compose file                         | `docker-compose.coolify.yml`                                                                                                       |
-| Domains UI                           | **Empty** for `platform-domain-router` (labels only — never add a domain here, never enable the Coolify catch-all checkbox)        |
-| Escape special characters in labels? | **OFF** (Traefik 3 `HostRegexp` backticks must stay unescaped)                                                                     |
-| Ports Exposes                        | `4280` (compose `expose`, never host `ports:`)                                                                                     |
+| Field                                | Value                                                                                                                                                   |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Name                                 | `platform-domain-router`                                                                                                                                |
+| Source                               | GitHub repo `platform-domain-router`                                                                                                                    |
+| Compose file                         | `docker-compose.coolify.yml`                                                                                                                            |
+| Domains UI                           | **Empty** for `platform-domain-router` (labels only — never add a domain here, never enable the Coolify catch-all checkbox)                             |
+| Escape special characters in labels? | **OFF** (Traefik 3 `HostRegexp` backticks must stay unescaped)                                                                                          |
+| Ports Exposes                        | `4280` (compose `expose`, never host `ports:`)                                                                                                          |
 | Advanced                             | Enable **Connect To Predefined Network** so this stack can reach SaaS resources (`platform-api`, `edge-router`, `school360-api`, `school360-dashboard`) |
 
 ## Environment variables
@@ -72,17 +72,17 @@ docker logs <platform-domain-router-container> 2>&1 | tail
 
 ## Troubleshooting
 
-| Symptom                                             | Check                                                                                                                  |
-| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| Log `host_unresolved` host=`edge-router`            | PDR redeployed with Host fix; edge-router Domains UI empty; custom domain hits PDR catch-all, not edge-router directly |
-| Log `host_unresolved` host=`platform-domain-router` | Same — verify `passhostheader=true` label on running container; Domains UI empty on PDR                                |
-| Custom domain 502                                   | `platform-domain-router` health, predefined network, `upstreamUrl` reachable                                           |
-| Custom domain 404                                   | `resolve-host` on each SaaS API; domain ACTIVE in DB                                                                   |
-| Managed slug hits PDR                               | Missing `edge-managed-*` priority 10 on SaaS edge-router                                                               |
-| TLS OK but wrong app                                | Two catch-alls — remove `edge-custom-*` from SaaS composes                                                             |
-| Catch-all 503 / rule not interpolating              | Escape labels still ON — toggle OFF and redeploy                                                                       |
+| Symptom                                                         | Check                                                                                                                                                               |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Log `host_unresolved` host=`edge-router`                        | PDR redeployed with Host fix; edge-router Domains UI empty; custom domain hits PDR catch-all, not edge-router directly                                              |
+| Log `host_unresolved` host=`platform-domain-router`             | Same — verify `passhostheader=true` label on running container; Domains UI empty on PDR                                                                             |
+| Custom domain 502                                               | `platform-domain-router` health, predefined network, `upstreamUrl` reachable                                                                                        |
+| Custom domain 404                                               | `resolve-host` on each SaaS API; domain ACTIVE in DB                                                                                                                |
+| Managed slug hits PDR                                           | Missing `edge-managed-*` priority 10 on SaaS edge-router                                                                                                            |
+| TLS OK but wrong app                                            | Two catch-alls — remove `edge-custom-*` from SaaS composes                                                                                                          |
+| Catch-all 503 / rule not interpolating                          | Escape labels still ON — toggle OFF and redeploy                                                                                                                    |
 | `middleware "gzip@docker" does not exist` on `pdr-custom-https` | Do not set `middlewares=gzip` on label-only routers (Traefik 3). Compose omits gzip; redeploy PDR after pull. Proxy/dynamic `gzip@file` does not fix `gzip@docker`. |
-| Intermittent 504 / No Available Server              | Host `ports:` mapping, or a custom `networks:` block — Coolify Traefik must stay on the resource network               |
+| Intermittent 504 / No Available Server                          | Host `ports:` mapping, or a custom `networks:` block — Coolify Traefik must stay on the resource network                                                            |
 
 ## Related
 
