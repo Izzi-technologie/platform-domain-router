@@ -27,7 +27,6 @@ services:
       - traefik.http.routers.pdr-custom-http.priority=1
       - traefik.http.routers.pdr-custom-http.service=pdr-svc
       - traefik.http.routers.pdr-custom-https.entryPoints=https
-      - traefik.http.routers.pdr-custom-https.middlewares=gzip
       - traefik.http.routers.pdr-custom-https.rule=HostRegexp(`^.+$`)
       - traefik.http.routers.pdr-custom-https.priority=1
       - traefik.http.routers.pdr-custom-https.service=pdr-svc

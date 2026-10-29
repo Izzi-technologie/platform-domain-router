@@ -81,6 +81,7 @@ docker logs <platform-domain-router-container> 2>&1 | tail
 | Managed slug hits PDR                               | Missing `edge-managed-*` priority 10 on SaaS edge-router                                                               |
 | TLS OK but wrong app                                | Two catch-alls — remove `edge-custom-*` from SaaS composes                                                             |
 | Catch-all 503 / rule not interpolating              | Escape labels still ON — toggle OFF and redeploy                                                                       |
+| `middleware "gzip@docker" does not exist` on `pdr-custom-https` | Do not set `middlewares=gzip` on label-only routers (Traefik 3). Compose omits gzip; redeploy PDR after pull. Proxy/dynamic `gzip@file` does not fix `gzip@docker`. |
 | Intermittent 504 / No Available Server              | Host `ports:` mapping, or a custom `networks:` block — Coolify Traefik must stay on the resource network               |
 
 ## Related

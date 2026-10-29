@@ -18,7 +18,6 @@ services:
 
       # HTTPS catch-all (custom domains)
       - traefik.http.routers.pdr-custom-https.entryPoints=https
-      - traefik.http.routers.pdr-custom-https.middlewares=gzip
       - traefik.http.routers.pdr-custom-https.rule=HostRegexp(`^.+$`)
       - traefik.http.routers.pdr-custom-https.priority=1
       - traefik.http.routers.pdr-custom-https.service=pdr-svc
